@@ -459,6 +459,9 @@ class Symfony extends Framework implements DoctrineProvider, PartedModule
     /**
      * Checks if the desired number of emails was sent.
      * If no argument is provided then at least one email must be sent to satisfy the check.
+     * The email is checked using Symfony's profiler. If your app performs a redirect after sending the email,
+     * you need to tell Codeception to not follow this redirect, using REST Module's [stopFollowingRedirects](
+     * https://codeception.com/docs/modules/REST#stopFollowingRedirects) method.
      *
      * ``` php
      * <?php
@@ -518,26 +521,6 @@ class Symfony extends Framework implements DoctrineProvider, PartedModule
      *
      * ``` php
      * <?php
-     * $em = $I->grabServiceFromContainer('doctrine');
-     * ?>
-     * ```
-     *
-     * @param $service
-     * @return mixed
-     * @part services
-     * @deprecated Use grabService instead
-     */
-    public function grabServiceFromContainer($service)
-    {
-        return $this->grabService($service);
-    }
-
-    /**
-     * Grabs a service from Symfony DIC container.
-     * Recommended to use for unit testing.
-     *
-     * ``` php
-     * <?php
      * $em = $I->grabService('doctrine');
      * ?>
      * ```
@@ -553,6 +536,41 @@ class Symfony extends Framework implements DoctrineProvider, PartedModule
             $this->fail("Service $service is not available in container");
         }
         return $container->get($service);
+    }
+    
+    /**
+     * Run Symfony console command, grab response and return as string.
+     * Recommended to use for integration or functional testing.
+     *
+     * ``` php
+     * <?php
+     * $result = $I->runSymfonyConsoleCommand('hello:world', '--verbose' => 3]);
+     * ?>
+     * ```
+     *
+     * @param string  $command
+     * @param mixed[] $params
+     *
+     * @return string
+     *
+     * @throws \Exception
+     */
+    public function runSymfonyConsoleCommand(string $command, array $params = [])
+    {
+        $application = new Application($this->kernel);
+        $application->setAutoExit(false);
+        $params['command'] = $command;
+
+        $input = new ArrayInput($params);
+        $output = new BufferedOutput();
+        $code = $application->run($input, $output);
+
+        // return the output, don't use if you used NullOutput()
+        $content = $output->fetch();
+
+        $this->assertEquals(0, $code, 'Exit code in '.$command.' is not equal 0 :'.$content);
+
+        return $content;
     }
 
     /**

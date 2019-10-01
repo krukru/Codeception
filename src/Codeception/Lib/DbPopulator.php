@@ -79,7 +79,7 @@ class DbPopulator
 
             unset($vars[$key]);
         }
-        return str_replace(array_keys($vars), array_values($vars), $command);
+        return str_replace(array_keys($vars), $vars, $command);
     }
 
     /**
@@ -119,7 +119,7 @@ class DbPopulator
     {
         if ($this->commands !== null) {
             return $this->commands;
-        } else if (!isset($this->config['dump']) || $this->config['dump'] === false) {
+        } elseif (!isset($this->config['dump']) || $this->config['dump'] === false) {
             return [$this->buildCommand($this->config['populator'])];
         }
 

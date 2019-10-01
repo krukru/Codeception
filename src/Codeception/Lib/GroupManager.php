@@ -5,6 +5,7 @@ use Codeception\Configuration;
 use Codeception\Test\Interfaces\Reported;
 use Codeception\Test\Descriptor;
 use Codeception\TestInterface;
+use Codeception\Test\Gherkin;
 use Symfony\Component\Finder\Finder;
 use Symfony\Component\Finder\SplFileInfo;
 
@@ -62,7 +63,22 @@ class GroupManager
             if (is_array($tests)) {
                 foreach ($tests as $test) {
                     $file = str_replace(['/', '\\'], [DIRECTORY_SEPARATOR, DIRECTORY_SEPARATOR], $test);
-                    $this->testsInGroups[$group][] = Configuration::projectDir() . $file;
+
+                    if (codecept_is_path_absolute($file)) {
+                        $filePath = $file;
+                    } elseif (strpos($file, ':') === false) {
+                        $filePath = realpath(Configuration::projectDir() . $file);
+                    } else {
+                        $pathParts = explode(':', $file);
+
+                        $filePath = sprintf(
+                            '%s:%s',
+                            realpath(Configuration::projectDir() . $pathParts[0]),
+                            $pathParts[1]
+                        );
+                    }
+
+                    $this->testsInGroups[$group][] = $filePath;
                 }
             } elseif (is_file(Configuration::projectDir() . $tests)) {
                 $handle = @fopen(Configuration::projectDir() . $tests, "r");
@@ -97,7 +113,7 @@ class GroupManager
             if (isset($info['class'])) {
                 $groups = array_merge($groups, \PHPUnit\Util\Test::getGroups($info['class'], $info['name']));
             }
-            $filename = str_replace(['\\\\', '//'], ['\\', '/'], $info['file']);
+            $filename = str_replace(['\\\\', '//', '/./'], ['\\', '/', '/'], $info['file']);
         }
         if ($test instanceof \PHPUnit\Framework\TestCase) {
             $groups = array_merge($groups, \PHPUnit\Util\Test::getGroups(get_class($test), $test->getName(false)));
@@ -116,6 +132,10 @@ class GroupManager
                     $groups[] = $group;
                 }
                 if (strpos($filename . ':' . $test->getName(false), $testPattern) === 0) {
+                    $groups[] = $group;
+                }
+                if ($test instanceof Gherkin
+                    && mb_strtolower($filename . ':' . $test->getMetadata()->getFeature()) === mb_strtolower($testPattern)) {
                     $groups[] = $group;
                 }
                 if ($test instanceof \PHPUnit\Framework\TestSuite\DataProvider) {

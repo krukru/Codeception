@@ -6,7 +6,6 @@ paths:
     envs: tests/envs
 settings:
     shuffle: true
-    bootstrap: _bootstrap.php
     suite_class: \PHPUnit_Framework_TestSuite
     colors: true
     memory_limit: 1024M
@@ -37,10 +36,5 @@ coverage:
     enabled: true
     include:
         - src/Codeception/Command/*
-        - src/Codeception/Module/Symfony1.php
-        - src/Codeception/Module/Symfony2.php
-        - src/Codeception/Module/Doctrine1.php
+        - src/Codeception/Module/Symfony.php
         - src/Codeception/Module/Doctrine2.php
-        - src/Codeception/Module/Kohana.php
-        - src/Codeception/Module/SocialEngine.php
-        - src/Codeception/Module/ZF1.php

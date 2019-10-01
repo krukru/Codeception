@@ -200,7 +200,9 @@ Please note that regular expressions should start and end with `/` char. Regex i
 
 ```php
 <?php
-/** @Given /I am (?:logged|authorized) as "(\w+)"/  */
+/**
+* @Given /I am (?:logged|authorized) as "(\w+)"/
+*/
 function amAuthorized($role)
 {
   // logged or authorized does not matter to us
@@ -250,7 +252,7 @@ class AcceptanceTester extends \Codeception\Actor
      */
      public function iHaveProductWithPriceInMyCart($num1)
      {
-        throw new \Codeception\Exception\Incomplete("Step `I have product with :num1 price in my cart` is not defined");
+        throw new \PHPUnit\Framework\IncompleteTestError("Step `I have product with :num1 price in my cart` is not defined");
      }
 
     /**
@@ -258,7 +260,7 @@ class AcceptanceTester extends \Codeception\Actor
      */
      public function iGoToCheckoutProcess()
      {
-        throw new \Codeception\Exception\Incomplete("Step `I go to checkout process` is not defined");
+        throw new \PHPUnit\Framework\IncompleteTestError("Step `I go to checkout process` is not defined");
      }
 
     /**
@@ -266,7 +268,7 @@ class AcceptanceTester extends \Codeception\Actor
      */
      public function iShouldSeeThatTotalNumberOfProductsIs($num1)
      {
-        throw new \Codeception\Exception\Incomplete("Step `I should see that total number of products is :num1` is not defined");
+        throw new \PHPUnit\Framework\IncompleteTestError("Step `I should see that total number of products is :num1` is not defined");
      }
 
     /**
@@ -274,7 +276,7 @@ class AcceptanceTester extends \Codeception\Actor
      */
      public function myOrderAmountIs($num1)
      {
-        throw new \Codeception\Exception\Incomplete("Step `my order amount is :num1` is not defined");
+        throw new \PHPUnit\Framework\IncompleteTestError("Step `my order amount is :num1` is not defined");
      }
 }
 ```

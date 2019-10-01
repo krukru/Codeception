@@ -2,12 +2,10 @@
 namespace Codeception\Lib\Connector;
 
 use Codeception\Exception\ConfigurationException;
-use Codeception\Exception\ModuleException;
 use Codeception\Lib\Connector\Yii2\Logger;
 use Codeception\Lib\Connector\Yii2\TestMailer;
-use Codeception\Lib\InnerBrowser;
 use Codeception\Util\Debug;
-use Symfony\Component\BrowserKit\Client;
+use Symfony\Component\BrowserKit\AbstractBrowser as Client;
 use Symfony\Component\BrowserKit\Cookie;
 use Symfony\Component\BrowserKit\Response;
 use Yii;
@@ -80,6 +78,11 @@ class Yii2 extends Client
      */
     public $recreateApplication = false;
 
+    /**
+     * @var bool whether to close the session in between requests inside a single test, if recreateApplication is set to true
+     */
+    public $closeSessionOnRecreateApplication = true;
+
 
     private $emails = [];
 
@@ -96,10 +99,15 @@ class Yii2 extends Client
         return Yii::$app;
     }
 
-    public function resetApplication()
+    /**
+     * @param bool $closeSession
+     */
+    public function resetApplication($closeSession = true)
     {
         codecept_debug('Destroying application');
-        $this->closeSession();
+        if (true === $closeSession) {
+            $this->closeSession();
+        }
         Yii::$app = null;
         \yii\web\UploadedFile::reset();
         if (method_exists(\yii\base\Event::className(), 'offAll')) {
@@ -221,7 +229,7 @@ class Yii2 extends Client
             $template = preg_replace_callback(
                 '/<(?:\w+):?([^>]+)?>/u',
                 function ($matches) use (&$parameters) {
-                    $key = '#' . count($parameters) . '#';
+                    $key = '__' . count($parameters) . '__';
                     $parameters[$key] = isset($matches[1]) ? $matches[1] : '\w+';
                     return $key;
                 },
@@ -542,7 +550,7 @@ TEXT
     protected function beforeRequest()
     {
         if ($this->recreateApplication) {
-            $this->resetApplication();
+            $this->resetApplication($this->closeSessionOnRecreateApplication);
             return;
         }
 

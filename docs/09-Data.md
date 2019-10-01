@@ -158,9 +158,7 @@ $I->click('Delete');
 $I->dontSeeRecord('posts', ['id' => $id]);
 ```
 
-<div class="alert alert-notice">
-Laravel5 module also provides `haveModel`, `makeModel` methods which use factories to generate models with fake data.
-</div>
+Laravel5 module provides the method `have` which uses the [factory](https://laravel.com/docs/5.8/database-testing#generating-factories) method to generate models with fake data.
 
 If you want to use ORM for integration testing only, you should enable the framework module with only the `ORM` part enabled:
 
@@ -196,7 +194,7 @@ modules:
         - Db
 ```
 
-### DataMapper
+### Doctrine
 
 Doctrine is also a popular ORM, unlike some others it implements the DataMapper pattern and is not bound to any framework.
 The [Doctrine2](http://codeception.com/docs/modules/Doctrine2) module requires an `EntityManager` instance to work with.
@@ -327,7 +325,7 @@ public function testCategoriesAreTheSame(\AcceptanceTester $I, \Snapshot\Categor
 On the first run, data will be obtained via `fetchData` method and saved to `tests/_data` directory in json format.
 On next execution the obtained data will be compared with previously saved snapshot.
 
-**To update a snapshot with a new data run tests in `--debug` mode.**
+> To update a snapshot with a new data run tests in `--debug` mode.
 
 By default Snapshot uses `assertEquals` assertion, however this can be customized by overriding `assertData` method.
   

@@ -2,32 +2,6 @@
 
 In this chapter we will explain how you can extend and customize the file structure and test execution routines.
 
-## One Runner for Multiple Applications
-
-If your project consists of several applications (frontend, admin, api) or you are using the Symfony framework
-with its bundles, you may be interested in having all tests for all applications (bundles) executed in one runner.
-In this case you will get one report that covers the whole project.
-
-Place the `codeception.yml` file into the root folder of your project
-and specify the paths to the other `codeception.yml` configurations that you want to include:
-
-```yaml
-include:
-  - frontend/src/*Bundle
-  - admin
-  - api/rest
-paths:
-  output: _output
-settings:
-  colors: false
-```
-
-You should also specify the path to the `log` directory, where the reports and logs will be saved.
-
-<div class="alert alert-notice">
-Wildcards (*) can be used to specify multiple directories at once.
-</div>
-
 ### Namespaces
 
 To avoid naming conflicts between Actor classes and Helper classes, they should be separated into namespaces.
@@ -60,6 +34,46 @@ php vendor/bin/codecept run unit -c frontend
 Where `unit` is the name of suite and the `-c` option specifies the path to the `codeception.yml` configuration file to use.
 In this example we will assume that there is `frontend/codeception.yml` configuration file
 and that we will execute the unit tests for only that app.
+
+## Bootstrap
+
+To prepare environment for testing you can execute custom PHP script before all tests or just before a specific suite.
+This way you can initialize autoloader, check availability of a website, etc.
+
+### Global Bootstrap
+
+To run bootstrap script before all suites place it in `tests` directory (absolute paths supported as well).
+Then set a `bootstrap` config key in `codeception.yml`:
+
+```yml
+# file will be loaded from tests/bootstrap.php
+bootstrap: bootstrap.php
+```
+
+### Suite Bootstrap
+
+To run a script for a specific suite, place it into the suite directory and add to suite config:
+
+```yml
+# inside <suitename>.suite.yml
+# file will be loaded from tests/<suitename>/bootstrap.php
+bootstrap: bootstrap.php
+```
+
+### On Fly Bootstrap
+
+Bootstrap script can be executed with `--bootstrap` option for `codecept run` command:
+
+```
+php vendor/bin/codecept run --bootstrap bootstrap.php
+```
+
+In this case, bootstrap script will be executed before the Codeception is initialized. 
+Bootstrap script should be located in current working directory or by an absolute path.
+
+> Bootstrap is a classical way to run custom PHP code before your tests. 
+However, we recommend you to use Extensions instead of bootstrap scripts for better flexibility.
+If you need configuration, conditional enabling or disabling bootstrap script, extensions should work for you better.  
 
 ## Extension
 
@@ -132,7 +146,7 @@ class MyCustomExtension extends \Codeception\Extension
 
     public static $events = array(
         Events::SUITE_AFTER  => 'afterSuite',
-        Events::SUITE_BEFORE => 'beforeTest',
+        Events::TEST_BEFORE => 'beforeTest',
         Events::STEP_BEFORE => 'beforeStep',
         Events::TEST_FAIL => 'testFailed',
         Events::RESULT_PRINT_AFTER => 'print',
@@ -180,15 +194,15 @@ To enable extension dynamically, execute the `run` command with `--ext` option.
 Provide a class name as a parameter:
 
 ```bash
-codecept run --ext MyCustomExtension
-codecept run --ext "\My\Extension"
+php vendor/bin/codecept run --ext MyCustomExtension
+php vendor/bin/codecept run --ext "\My\Extension"
 ```
 
 If a class is in a `Codeception\Extension` namespace you can skip it and provide only a shortname.
 So Recorder extension can be started like this:
 
 ```bash
-codecept run --ext Recorder
+php vendor/bin/codecept run --ext Recorder
 ```
 
 ### Configuring Extension
@@ -267,9 +281,9 @@ class Admin extends \Codeception\GroupObject
         $this->writeln('inserting additional admin users...');
 
         $db = $this->getModule('Db');
-        $db->haveInDatabase('users', array('name' => 'bill', 'role' => 'admin'));
-        $db->haveInDatabase('users', array('name' => 'john', 'role' => 'admin'));
-        $db->haveInDatabase('users', array('name' => 'mark', 'role' => 'banned'));
+        $db->haveInDatabase('users', ['name' => 'bill', 'role' => 'admin']);
+        $db->haveInDatabase('users', ['name' => 'john', 'role' => 'admin']);
+        $db->haveInDatabase('users', ['name' => 'mark', 'role' => 'banned']);
     }
 
     public function _after(\Codeception\Event\TestEvent $e)
@@ -305,6 +319,34 @@ extensions:
 
 Now the Admin group class will listen for all events of tests that belong to the `admin` group.
 
+## Step Decorators
+
+Actor classes include generated steps taken from corresponding modules and helpers. 
+You can introduce wrappers for those steps by using step decorators. 
+
+Step decorators are used to implement conditional assertions. 
+When enabled, conditional assertions take all method prefixed by `see` or `dontSee` and introduce new steps prefixed with `canSee` and `cantSee`. 
+Contrary to standard assertions those assertions won't stop test on failure. This is done by wrapping action into try/catch blocks.
+
+List of available step decorators:
+
+- [ConditionalAssertion](https://github.com/Codeception/Codeception/blob/3.0/src/Codeception/Step/ConditionalAssertion.php)  - failed assertion will be logged, but test will continue.
+- [TryTo](https://github.com/Codeception/Codeception/blob/3.0/src/Codeception/Step/TryTo.php) - failed action will be ignored.
+- [Retry](https://github.com/Codeception/Codeception/blob/3.0/src/Codeception/Step/Retry.php) - failed action will be retried automatically.
+
+Step decorators can be added to suite config inside `steps` block:
+
+```yml
+step_decorators:
+    - Codeception/Step/TryTo
+    - Codeception/Step/Retry
+    - Codeception/Step/ConditionalAssertion
+```
+
+You can introduce your own step decorators. Take a look into sample decorator classes and create your own class which implements `Codeception\Step\GeneratedStep` interface.
+A class should provide `getTemplate` method which returns a code block and variables passed into a template. 
+Make your class accessible by autoloader and you can have your own step decorators working. 
+
 ## Custom Reporters
 
 Alternative reporters can be implemented as extension.
@@ -312,7 +354,7 @@ There are [DotReporter](http://codeception.com/extensions#DotReporter) and [Simp
 Use them to change output or use them as an example to build your own reporter. They can be easily enabled with `--ext` option
 
 ```bash
-codecept run --ext DotReporter
+php vendor/bin/codecept run --ext DotReporter
 ```
 
 ![](https://cloud.githubusercontent.com/assets/220264/26132800/4d23f336-3aab-11e7-81ba-2896a4c623d2.png)
@@ -350,12 +392,12 @@ Codeception has built-in installation templates for
 They can be executed with `init` command:
 
 ```bash
-codecept init Acceptance
+php vendor/bin/codecept init Acceptance
 ```
 To init tests in specific folder use `--path` option:
 
 ```bash
-codecept init Acceptance --path acceptance_tests
+php vendor/bin/codecept init Acceptance --path acceptance_tests
 ```
 
 You will be asked several questions and then config files will be generated and all necessary directories will be created.
@@ -367,6 +409,32 @@ Learn from the examples above to build a custom Installation Template. Here are 
 * Use `createDirectoryFor`, `createEmptyDirectory` methods to create directories
 * Use `createHelper`, `createActor` methods to create helpers and actors.
 * Use [Codeception generators](https://github.com/Codeception/Codeception/tree/2.4/src/Codeception/Lib/Generator) to create other support classes.
+
+
+## One Runner for Multiple Applications
+
+If your project consists of several applications (frontend, admin, api) or you are using the Symfony framework
+with its bundles, you may be interested in having all tests for all applications (bundles) executed in one runner.
+In this case you will get one report that covers the whole project.
+
+Place the `codeception.yml` file into the root folder of your project
+and specify the paths to the other `codeception.yml` configurations that you want to include:
+
+```yaml
+include:
+  - frontend/src/*Bundle
+  - admin
+  - api/rest
+paths:
+  output: _output
+settings:
+  colors: false
+```
+
+You should also specify the path to the `log` directory, where the reports and logs will be saved.
+
+> Wildcards (*) can be used to specify multiple directories at once.
+
 
 ## Conclusion
 

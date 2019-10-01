@@ -61,6 +61,7 @@ use Symfony\Component\Console\Output\OutputInterface;
  *  --html                Generate html with results (default: "report.html")
  *  --xml                 Generate JUnit XML Log (default: "report.xml")
  *  --phpunit-xml         Generate PhpUnit XML Log (default: "phpunit-report.xml")
+ *  --no-redirect         Do not redirect to Composer-installed version in vendor/codeception
  *  --tap                 Generate Tap Log (default: "report.tap.log")
  *  --json                Generate Json Log (default: "report.json")
  *  --colors              Use colors in output
@@ -68,6 +69,7 @@ use Symfony\Component\Console\Output\OutputInterface;
  *  --silent              Only outputs suite names and final results
  *  --steps               Show steps in output
  *  --debug (-d)          Show debug and scenario output
+ *  --bootstrap           Execute bootstrap script before the test
  *  --coverage            Run with code coverage (default: "coverage.serialized")
  *  --coverage-html       Generate CodeCoverage HTML report in path (default: "coverage")
  *  --coverage-xml        Generate CodeCoverage XML report in file (default: "coverage.xml")
@@ -142,6 +144,8 @@ class Run extends Command
             new InputOption('silent', '', InputOption::VALUE_NONE, 'Only outputs suite names and final results'),
             new InputOption('steps', '', InputOption::VALUE_NONE, 'Show steps in output'),
             new InputOption('debug', 'd', InputOption::VALUE_NONE, 'Show debug and scenario output'),
+            new InputOption('bootstrap', '', InputOption::VALUE_OPTIONAL, 'Execute custom PHP script before running tests. Path can be absolute or relative to current working directory', false),
+            new InputOption('no-redirect', '', InputOption::VALUE_NONE, 'Do not redirect to Composer-installed version in vendor/codeception'),
             new InputOption(
                 'coverage',
                 '',
@@ -237,6 +241,10 @@ class Run extends Command
         $this->options = $input->getOptions();
         $this->output = $output;
 
+        if ($this->options['bootstrap']) {
+            Configuration::loadBootstrap($this->options['bootstrap'], getcwd());
+        }
+
         // load config
         $config = $this->getGlobalConfig();
 
@@ -259,7 +267,6 @@ class Run extends Command
             $this->output->writeln(
                 "Running with seed: " . $this->options['seed'] . "\n"
             );
-
         }
         if ($this->options['debug']) {
             $this->output->setVerbosity(OutputInterface::VERBOSITY_VERY_VERBOSE);

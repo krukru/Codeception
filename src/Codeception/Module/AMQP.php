@@ -1,7 +1,7 @@
 <?php
 namespace Codeception\Module;
 
-use Codeception\Exception\ModuleException as ModuleException;
+use Codeception\Exception\ModuleException;
 use Codeception\Lib\Interfaces\RequiresPackage;
 use Codeception\Module as CodeceptionModule;
 use Codeception\TestInterface;
@@ -315,7 +315,7 @@ class AMQP extends CodeceptionModule implements RequiresPackage
             $this->fail("Received message is not format of AMQPMessage");
         }
         $this->debugSection("Message", $msg->body);
-        $this->assertContains($text, $msg->body);
+        $this->assertStringContainsString($text, $msg->body);
     }
 
     /**

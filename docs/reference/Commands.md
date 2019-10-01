@@ -156,6 +156,8 @@ Options:
  --report              Show output in compact style
  --html                Generate html with results (default: "report.html")
  --xml                 Generate JUnit XML Log (default: "report.xml")
+ --phpunit-xml         Generate PhpUnit XML Log (default: "phpunit-report.xml")
+ --no-redirect         Do not redirect to Composer-installed version in vendor/codeception
  --tap                 Generate Tap Log (default: "report.tap.log")
  --json                Generate Json Log (default: "report.json")
  --colors              Use colors in output
@@ -163,6 +165,7 @@ Options:
  --silent              Only outputs suite names and final results
  --steps               Show steps in output
  --debug (-d)          Show debug and scenario output
+ --bootstrap           Execute bootstrap script before the test
  --coverage            Run with code coverage (default: "coverage.serialized")
  --coverage-html       Generate CodeCoverage HTML report in path (default: "coverage")
  --coverage-xml        Generate CodeCoverage XML report in file (default: "coverage.xml")
